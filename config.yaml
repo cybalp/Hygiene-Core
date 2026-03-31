@@ -1,56 +1,32 @@
-# Global Settings
-dry_run: true
+dry_run: false
+lang: en
 interactive_mode: false
 alert_threshold_mb: 0
-logging_level: "INFO"
+logging_level: INFO
 telegram_report: true
 max_log_size_mb: 3
-
-# CacheCleaner Settings
 cache_expiry_days: 7
 exclude_list:
-  - "browser-session"
-  - "ide-indexes"
-  - "keep-this-folder"
-
-# Package Manager Cleaner (pm_cleaner)
+- browser-session
+- ide-indexes
+- keep-this-folder
 clean_aur_cache: true
-
-# Systemd Journal Cleaner
-journal_max_size: "200M"
-journal_max_age: "7d"
-
-# Trash Cleaner
+journal_max_size: 200M
+journal_max_age: 7d
 trash_expiry_days: 30
-
-# Docker Pruner
 docker_prune_all: false
 docker_prune_volumes: true
-
-# Symlink Sweeper
 symlink_scan_dirs:
-  - "~/.config"
-  - "~/.local/bin"
-  - "~/.local/share"
-
-# Thumbnail Cleaner
+- ~/.config
+- ~/.local/bin
+- ~/.local/share
 thumbnail_expiry_days: 14
-
-# Orphan Remover (pacman -Qtdq)
 remove_orphans: true
-
-# Flatpak Cleaner
 remove_unused_flatpaks: true
-
-# Dev Cache Cleaner
 clean_npm_cache: true
 clean_pip_cache: true
 clean_cargo_cache: true
-
-# Storage Monitor
 storage_alert_threshold_percent: 90
-
-# Downloads Archiver
 archive_downloads: true
 archive_files_older_than_days: 180
-archive_destination: "~/Downloads/Archive"
+archive_destination: ~/Downloads/Archive

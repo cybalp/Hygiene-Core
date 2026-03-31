@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from system.orchestrator import Orchestrator
 from telegram.design import ReportDesigner
+from telegram.locales import t
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(dotenv_path=BASE_DIR / ".env")
@@ -19,6 +20,8 @@ if not BOT_TOKEN or not CHAT_ID:
     exit(1)
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# ──────────────────────────── Config Helpers ────────────────────────────
 
 def load_config():
     config_path = BASE_DIR / "config.yaml"
@@ -33,68 +36,6 @@ def save_config(config_data):
 def is_authorized(message):
     return str(message.chat.id) == str(CHAT_ID)
 
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
-    if not is_authorized(message): return
-    text = (
-        "🤖 *Hygiene-Core Control Panel*\n\n"
-        "🧹 `/clean` \- Start cleaning now\n"
-        "🛡 `/dryrun_on` \- Enable Safe Mode\n"
-        "🧨 `/dryrun_off` \- Disable Safe Mode \(DANGER\!\)\n"
-        "⚙️ `/config` \- View current settings\n"
-        "✏️ `/set key value` \- Change a config setting\n\n"
-        "*Examples:*\n"
-        "`/set interactive_mode true`\n"
-        "`/set alert_threshold_mb 500`\n"
-        "`/set cache_expiry_days 14`\n"
-        "`/set storage_alert_threshold_percent 85`"
-    )
-    bot.send_message(message.chat.id, text, parse_mode="MarkdownV2")
-
-@bot.message_handler(commands=['clean'])
-def run_clean(message):
-    if not is_authorized(message): return
-    bot.send_message(message.chat.id, "⏳ _Hygiene-Core started. Running pipeline..._", parse_mode="Markdown")
-    
-    orchestrator = Orchestrator()
-    results = orchestrator.run_pipeline()
-    report = ReportDesigner.create_markdown(results)
-    
-    bot.send_message(message.chat.id, report, parse_mode="Markdown")
-
-@bot.message_handler(commands=['dryrun_on'])
-def enable_dryrun(message):
-    if not is_authorized(message): return
-    config = load_config()
-    if config.get("dry_run", True):
-        bot.send_message(message.chat.id, "Zaten Dry Run modundasın ✔️")
-        return
-        
-    config["dry_run"] = True
-    save_config(config)
-    bot.send_message(message.chat.id, "🛡 *Dry Run is now:* ✅ ENABLED (Safe Mode)", parse_mode="Markdown")
-
-@bot.message_handler(commands=['dryrun_off'])
-def disable_dryrun(message):
-    if not is_authorized(message): return
-    config = load_config()
-    if not config.get("dry_run", True):
-        bot.send_message(message.chat.id, "Zaten Dry Run modun kapalı (Tehlike modu) 🚨")
-        return
-        
-    config["dry_run"] = False
-    save_config(config)
-    bot.send_message(message.chat.id, "🛡 *Dry Run is now:* 🚨 DISABLED (Danger Mode, files will be deleted!)", parse_mode="Markdown")
-
-@bot.message_handler(commands=['config'])
-def show_config(message):
-    if not is_authorized(message): return
-    config = load_config()
-    text = "⚙️ *Current Configuration*\n\n```yaml\n"
-    text += yaml.safe_dump(config, sort_keys=False)
-    text += "\n```"
-    bot.send_message(message.chat.id, text, parse_mode="Markdown")
-
 def parse_value(raw):
     """Auto-cast strings to proper Python types."""
     if raw.lower() == 'true':  return True
@@ -105,42 +46,106 @@ def parse_value(raw):
     except ValueError: pass
     return raw
 
+# ──────────────────────────── Commands ────────────────────────────
+
+@bot.message_handler(commands=['start', 'help'])
+def send_welcome(message):
+    if not is_authorized(message): return
+    config = load_config()
+    bot.send_message(message.chat.id, t(config, "help"), parse_mode="Markdown")
+
+@bot.message_handler(commands=['clean'])
+def run_clean(message):
+    if not is_authorized(message): return
+    config = load_config()
+    bot.send_message(message.chat.id, t(config, "clean_start"), parse_mode="Markdown")
+
+    orchestrator = Orchestrator()
+    results = orchestrator.run_pipeline()
+    report = ReportDesigner.create_markdown(results)
+    bot.send_message(message.chat.id, report, parse_mode="Markdown")
+
+@bot.message_handler(commands=['dryrun_on'])
+def enable_dryrun(message):
+    if not is_authorized(message): return
+    config = load_config()
+    if config.get("dry_run", True):
+        bot.send_message(message.chat.id, t(config, "dryrun_already_on"))
+        return
+    config["dry_run"] = True
+    save_config(config)
+    bot.send_message(message.chat.id, t(config, "dryrun_enabled"), parse_mode="Markdown")
+
+@bot.message_handler(commands=['dryrun_off'])
+def disable_dryrun(message):
+    if not is_authorized(message): return
+    config = load_config()
+    if not config.get("dry_run", True):
+        bot.send_message(message.chat.id, t(config, "dryrun_already_off"))
+        return
+    config["dry_run"] = False
+    save_config(config)
+    bot.send_message(message.chat.id, t(config, "dryrun_disabled"), parse_mode="Markdown")
+
+@bot.message_handler(commands=['config'])
+def show_config(message):
+    if not is_authorized(message): return
+    config = load_config()
+    text = t(config, "config_header")
+    text += yaml.safe_dump(config, sort_keys=False)
+    text += "\n```"
+    bot.send_message(message.chat.id, text, parse_mode="Markdown")
+
 @bot.message_handler(commands=['set'])
 def set_config(message):
     if not is_authorized(message): return
+    config = load_config()
     parts = message.text.strip().split(maxsplit=2)
     if len(parts) < 3:
-        bot.send_message(message.chat.id,
-            "⚠️ Usage: `/set key value`\nExample: `/set interactive_mode true`",
-            parse_mode="Markdown")
+        bot.send_message(message.chat.id, t(config, "set_usage"), parse_mode="Markdown")
         return
 
     key   = parts[1]
     value = parse_value(parts[2])
 
-    config = load_config()
     if key not in config:
-        bot.send_message(message.chat.id,
-            f"❌ Unknown key: `{key}`\nRun `/config` to see valid keys.",
-            parse_mode="Markdown")
+        bot.send_message(message.chat.id, t(config, "set_unknown_key", key=key), parse_mode="Markdown")
         return
 
     old = config[key]
     config[key] = value
     save_config(config)
-    bot.send_message(message.chat.id,
-        f"✅ *Config updated!*\n`{key}`: `{old}` → `{value}`",
-        parse_mode="Markdown")
+    bot.send_message(message.chat.id, t(config, "set_success", key=key, old=old, new=value), parse_mode="Markdown")
+
+@bot.message_handler(commands=['lang'])
+def set_language(message):
+    if not is_authorized(message): return
+    config = load_config()
+    parts = message.text.strip().split()
+    if len(parts) < 2 or parts[1].lower() not in ("en", "tr"):
+        bot.send_message(message.chat.id, t(config, "lang_invalid"), parse_mode="Markdown")
+        return
+
+    lang = parts[1].lower()
+    config["lang"] = lang
+    save_config(config)
+    bot.send_message(message.chat.id, t(config, "lang_changed"), parse_mode="Markdown")
+
+# ──────────────────────────── Callbacks ────────────────────────────
 
 @bot.callback_query_handler(func=lambda call: call.data == "confirm_clean_all")
 def callback_confirm_clean(call):
     if not is_authorized(call.message): return
-    bot.edit_message_text("⏳ _Hygiene-Core started. Running real pipeline..._", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="Markdown")
-    
+    config = load_config()
+    bot.edit_message_text(
+        t(config, "confirm_clean_start"),
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        parse_mode="Markdown"
+    )
     orchestrator = Orchestrator()
     orchestrator.config["dry_run"] = False
     results = orchestrator.run_pipeline()
-    
     report = ReportDesigner.create_markdown(results)
     bot.edit_message_text(report, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="Markdown")
 
