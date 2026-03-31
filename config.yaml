@@ -8,7 +8,7 @@ max_log_size_mb: 3
 
 # CacheCleaner Settings
 cache_expiry_days: 7
-exclude_list: 
+exclude_list:
   - "browser-session"
   - "ide-indexes"
   - "keep-this-folder"
