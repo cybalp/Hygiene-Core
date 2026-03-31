@@ -57,10 +57,24 @@ def main():
             results = orchestrator.run_pipeline()
             
             # 3. Handle Telegram Notification
+            total_mb = sum(res.get("cleaned_mb", 0) for res in results)
+            threshold = config.get("alert_threshold_mb", 0)
+            
+            if threshold > 0 and total_mb < threshold:
+                logger.info(f"Skipping report. Total {total_mb:.2f} MB < limit {threshold} MB.")
+                return
+
             if config.get("telegram_report") and results:
                 sender = TelegramSender()
                 report = ReportDesigner.create_markdown(results)
-                sender.send_report(report)
+                
+                reply_markup = None
+                if config.get("interactive_mode") and config.get("dry_run"):
+                    reply_markup = {
+                        "inline_keyboard": [[{"text": "🧹 Confirm & Clean All", "callback_data": "confirm_clean_all"}]]
+                    }
+
+                sender.send_report(report, reply_markup=reply_markup)
                 logger.info("Telegram report sent.")
 
             logger.info(f"Hygiene-Core finished. Modules processed: {len(results)}")

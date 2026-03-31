@@ -12,7 +12,7 @@ class TelegramSender:
         self.chat_id = os.getenv("CHAT_ID")
         self.url = f"https://api.telegram.org/bot{self.token}/sendMessage"
 
-    def send_report(self, text):
+    def send_report(self, text, reply_markup=None):
         if not self.token or not self.chat_id:
             return False
         
@@ -21,6 +21,9 @@ class TelegramSender:
             "text": text,
             "parse_mode": "Markdown"
         }
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
+            
         try:
             response = requests.post(self.url, json=payload)
             return response.status_code == 200

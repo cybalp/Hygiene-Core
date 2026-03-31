@@ -1,5 +1,7 @@
 # Global Settings
 dry_run: true
+interactive_mode: false
+alert_threshold_mb: 0
 logging_level: "INFO"
 telegram_report: true
 max_log_size_mb: 3
@@ -36,3 +38,19 @@ thumbnail_expiry_days: 14
 
 # Orphan Remover (pacman -Qtdq)
 remove_orphans: true
+
+# Flatpak Cleaner
+remove_unused_flatpaks: true
+
+# Dev Cache Cleaner
+clean_npm_cache: true
+clean_pip_cache: true
+clean_cargo_cache: true
+
+# Storage Monitor
+storage_alert_threshold_percent: 90
+
+# Downloads Archiver
+archive_downloads: true
+archive_files_older_than_days: 180
+archive_destination: "~/Downloads/Archive"

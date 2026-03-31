@@ -89,6 +89,18 @@ def show_config(message):
     text += "\n```"
     bot.send_message(message.chat.id, text, parse_mode="Markdown")
 
+@bot.callback_query_handler(func=lambda call: call.data == "confirm_clean_all")
+def callback_confirm_clean(call):
+    if not is_authorized(call.message): return
+    bot.edit_message_text("⏳ _Hygiene-Core started. Running real pipeline..._", chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="Markdown")
+    
+    orchestrator = Orchestrator()
+    orchestrator.config["dry_run"] = False
+    results = orchestrator.run_pipeline()
+    
+    report = ReportDesigner.create_markdown(results)
+    bot.edit_message_text(report, chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="Markdown")
+
 if __name__ == "__main__":
     print("Bot is listening...")
     bot.infinity_polling()
