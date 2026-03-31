@@ -8,7 +8,7 @@ class ReportDesigner:
         return f"{bytes_size:.2f} TB"
 
     @staticmethod
-    def create_markdown(results, version="1.0.0"):
+    def create_markdown(results):
         report = "🧹 *𝗛𝘆𝗴𝗶𝗲𝗻𝗲-𝗖𝗼𝗿𝗲 𝗔𝘂𝘁𝗼 𝗥𝗲𝗽𝗼𝗿𝘁*\n\n"
         report += "‾" * 60 + "\n\n"
         
@@ -25,5 +25,5 @@ class ReportDesigner:
             if "error" in res:
                 report += f" └ Error: `{res['error']}`\n"
         
-        report += f"\n*System Optimized. 𝗢𝗞!* `v{version}`"
+        report += "\n*System Optimized. 𝗢𝗞!*"
         return report

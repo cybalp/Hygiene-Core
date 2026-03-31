@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-__version__ = "1.0.0"
 
 import sys
 import os
@@ -54,13 +53,13 @@ def main():
 
             # 2. Run pipeline
             orchestrator = Orchestrator()
-            logger.info(f"Hygiene-Core v{__version__} started.")
+            logger.info("Hygiene-Core started.")
             results = orchestrator.run_pipeline()
             
             # 3. Handle Telegram Notification
             if config.get("telegram_report") and results:
                 sender = TelegramSender()
-                report = ReportDesigner.create_markdown(results, version=__version__)
+                report = ReportDesigner.create_markdown(results)
                 sender.send_report(report)
                 logger.info("Telegram report sent.")
 
