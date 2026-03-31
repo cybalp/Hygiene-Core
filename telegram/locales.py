@@ -57,10 +57,10 @@ STRINGS = {
     }
 }
 
-def t(config: dict, key: str, **kwargs) -> str:
-    """Translate a key based on the current language in config."""
+def t(config: dict, msg_id: str, **kwargs) -> str:
+    """Translate a message ID based on the current language in config."""
     lang = config.get("lang", "en")
     if lang not in STRINGS:
         lang = "en"
-    text = STRINGS[lang].get(key, STRINGS["en"].get(key, key))
+    text = STRINGS[lang].get(msg_id, STRINGS["en"].get(msg_id, msg_id))
     return text.format(**kwargs) if kwargs else text
