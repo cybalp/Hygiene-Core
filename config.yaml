@@ -1,7 +1,7 @@
 dry_run: false
 lang: en
-interactive_mode: false
-alert_threshold_mb: 0
+interactive_mode: true
+alert_threshold_mb: 500
 logging_level: INFO
 telegram_report: true
 max_log_size_mb: 3

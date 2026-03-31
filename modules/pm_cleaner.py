@@ -35,13 +35,18 @@ class PackageManagerCleaner:
                 except subprocess.CalledProcessError:
                     error_msg = "Root permissions required for pacman (-Sc) without password."
         
-        # Yay
+        # Yay — clean cache dir directly (avoids interactive prompts)
         yay_dir = os.path.expanduser('~/.cache/yay')
         if self.clean_aur and os.path.exists(yay_dir):
             size_before = self.get_dir_size(yay_dir)
             if not self.dry_run:
                 try:
-                    subprocess.run(['yay', '-Sc', '--noconfirm'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    import shutil
+                    # Remove downloaded pkg archives only, keep pkg db
+                    for item in os.listdir(yay_dir):
+                        item_path = os.path.join(yay_dir, item)
+                        if os.path.isdir(item_path):
+                            shutil.rmtree(item_path, ignore_errors=True)
                     size_after = self.get_dir_size(yay_dir)
                     cleaned_size += max(0, size_before - size_after)
                 except Exception:

@@ -34,5 +34,8 @@ class ReportDesigner:
             
         report += "\n\n".join(module_blocks) + "\n"
         
-        report += "\n*System Optimized. 𝗢𝗞!*"
+        if is_dry_run:
+            report += "\n_Scan complete. No files were deleted._"
+        else:
+            report += "\n*System cleaned. 𝗢𝗞!*"
         return report
