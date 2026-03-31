@@ -1,0 +1,20 @@
+# Secrets
+.env
+
+# Environments
+venv/
+ENV/
+plan/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*.class
+
+# Logs & Locks
+*.log
+*.old
+*.lock
+
+# OS Files
+.DS_Store

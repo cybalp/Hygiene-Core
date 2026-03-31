@@ -1,0 +1,12 @@
+# Global Settings
+dry_run: true
+logging_level: "INFO"
+telegram_report: true
+max_log_size_mb: 3
+
+# Module Settings
+cache_expiry_days: 7
+exclude_list: 
+  - "browser-session"
+  - "ide-indexes"
+  - "keep-this-folder"
