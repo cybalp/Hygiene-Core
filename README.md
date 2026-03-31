@@ -78,6 +78,49 @@ pip install -r requirements.txt
 cp .env-example .env # Add your Telegram credentials
 ```
 
+#### ⏰ Automating with Systemd (Optional)
+
+To run Hygiene-Core fully automatically on a schedule (e.g., every Monday at 00:00) and grant it the necessary permissions for system-level cleanups:
+
+1. **Grant passwordless sudo for specific commands:**
+To allow the script to clean Arch Linux cache via `pacman` and `journalctl`, run this in your terminal:
+```bash
+echo "$USER ALL=(root) NOPASSWD: /usr/bin/pacman -Sc --noconfirm, /usr/bin/pacman -Rns --noconfirm *, /usr/bin/journalctl --vacuum-size=*, /usr/bin/journalctl --vacuum-time=*" | sudo tee /etc/sudoers.d/hygiene-core > /dev/null && sudo chmod 0440 /etc/sudoers.d/hygiene-core && sudo visudo -c
+```
+
+2. **Create the Systemd User Service:**
+Create `~/.config/systemd/user/hygiene.service`:
+```ini
+[Unit]
+Description=Hygiene-Core Maintenance Task
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/SCRIPTS/hygiene-core
+ExecStart=%h/SCRIPTS/hygiene-core/venv/bin/python %h/SCRIPTS/hygiene-core/hygiene.py
+```
+
+3. **Create the Timer:**
+Create `~/.config/systemd/user/hygiene.timer`:
+```ini
+[Unit]
+Description=Run Hygiene-Core Every Monday at 00:00
+
+[Timer]
+OnCalendar=Mon *-*-* 00:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+4. **Enable Everything:**
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now hygiene.timer
+```
+
 ## 🛠 Module Writing Guide
 
 Add a `.py` file to `modules/`. The orchestrator will auto-discover it.
@@ -129,6 +172,49 @@ cd Hygiene-Core
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env-example .env # Telegram bilgilerini girin
+```
+
+#### ⏰ Systemd ile Otomasyon (Opsiyonel)
+
+Hygiene-Core'un arka planda periyodik olarak (örneğin her Pazartesi 00:00'da) çalışması ve sistem seviyesindeki çöpleri temizlemeye yetkisi olması için:
+
+1. **Gerekli özel root (sudo) izinlerini verin:**
+Scriptin `pacman` ve `journalctl` için pürüzsüz çalışması adına aşağıdaki komutu terminalinize yapıştırın:
+```bash
+echo "$USER ALL=(root) NOPASSWD: /usr/bin/pacman -Sc --noconfirm, /usr/bin/pacman -Rns --noconfirm *, /usr/bin/journalctl --vacuum-size=*, /usr/bin/journalctl --vacuum-time=*" | sudo tee /etc/sudoers.d/hygiene-core > /dev/null && sudo chmod 0440 /etc/sudoers.d/hygiene-core && sudo visudo -c
+```
+
+2. **Systemd Servisini Oluşturun:**
+`~/.config/systemd/user/hygiene.service` dosyasını oluşturun:
+```ini
+[Unit]
+Description=Hygiene-Core Maintenance Task
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/SCRIPTS/hygiene-core
+ExecStart=%h/SCRIPTS/hygiene-core/venv/bin/python %h/SCRIPTS/hygiene-core/hygiene.py
+```
+
+3. **Timer (Zamanlayıcı) Dosyasını Oluşturun:**
+`~/.config/systemd/user/hygiene.timer` dosyasını oluşturun:
+```ini
+[Unit]
+Description=Run Hygiene-Core Every Monday at 00:00
+
+[Timer]
+OnCalendar=Mon *-*-* 00:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+4. **Sistemi Başlatın ve Aktifleştirin:**
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now hygiene.timer
 ```
 
 ---

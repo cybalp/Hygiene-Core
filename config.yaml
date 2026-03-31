@@ -4,9 +4,35 @@ logging_level: "INFO"
 telegram_report: true
 max_log_size_mb: 3
 
-# Module Settings
+# CacheCleaner Settings
 cache_expiry_days: 7
 exclude_list: 
   - "browser-session"
   - "ide-indexes"
   - "keep-this-folder"
+
+# Package Manager Cleaner (pm_cleaner)
+clean_aur_cache: true
+
+# Systemd Journal Cleaner
+journal_max_size: "200M"
+journal_max_age: "7d"
+
+# Trash Cleaner
+trash_expiry_days: 30
+
+# Docker Pruner
+docker_prune_all: false
+docker_prune_volumes: true
+
+# Symlink Sweeper
+symlink_scan_dirs:
+  - "~/.config"
+  - "~/.local/bin"
+  - "~/.local/share"
+
+# Thumbnail Cleaner
+thumbnail_expiry_days: 14
+
+# Orphan Remover (pacman -Qtdq)
+remove_orphans: true
