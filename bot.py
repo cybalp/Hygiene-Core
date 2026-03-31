@@ -38,12 +38,18 @@ def send_welcome(message):
     if not is_authorized(message): return
     text = (
         "🤖 *Hygiene-Core Control Panel*\n\n"
-        "🧹 `/clean` - Start cleaning process now\n"
-        "🛡 `/dryrun_on` - Enable Test Mode (No delete)\n"
-        "🧨 `/dryrun_off` - Disable Test Mode (DANGER!)\n"
-        "⚙️ `/config` - View current settings\n"
+        "🧹 `/clean` \- Start cleaning now\n"
+        "🛡 `/dryrun_on` \- Enable Safe Mode\n"
+        "🧨 `/dryrun_off` \- Disable Safe Mode \(DANGER\!\)\n"
+        "⚙️ `/config` \- View current settings\n"
+        "✏️ `/set key value` \- Change a config setting\n\n"
+        "*Examples:*\n"
+        "`/set interactive_mode true`\n"
+        "`/set alert_threshold_mb 500`\n"
+        "`/set cache_expiry_days 14`\n"
+        "`/set storage_alert_threshold_percent 85`"
     )
-    bot.send_message(message.chat.id, text, parse_mode="Markdown")
+    bot.send_message(message.chat.id, text, parse_mode="MarkdownV2")
 
 @bot.message_handler(commands=['clean'])
 def run_clean(message):
@@ -88,6 +94,43 @@ def show_config(message):
     text += yaml.safe_dump(config, sort_keys=False)
     text += "\n```"
     bot.send_message(message.chat.id, text, parse_mode="Markdown")
+
+def parse_value(raw):
+    """Auto-cast strings to proper Python types."""
+    if raw.lower() == 'true':  return True
+    if raw.lower() == 'false': return False
+    try: return int(raw)
+    except ValueError: pass
+    try: return float(raw)
+    except ValueError: pass
+    return raw
+
+@bot.message_handler(commands=['set'])
+def set_config(message):
+    if not is_authorized(message): return
+    parts = message.text.strip().split(maxsplit=2)
+    if len(parts) < 3:
+        bot.send_message(message.chat.id,
+            "⚠️ Usage: `/set key value`\nExample: `/set interactive_mode true`",
+            parse_mode="Markdown")
+        return
+
+    key   = parts[1]
+    value = parse_value(parts[2])
+
+    config = load_config()
+    if key not in config:
+        bot.send_message(message.chat.id,
+            f"❌ Unknown key: `{key}`\nRun `/config` to see valid keys.",
+            parse_mode="Markdown")
+        return
+
+    old = config[key]
+    config[key] = value
+    save_config(config)
+    bot.send_message(message.chat.id,
+        f"✅ *Config updated!*\n`{key}`: `{old}` → `{value}`",
+        parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: call.data == "confirm_clean_all")
 def callback_confirm_clean(call):
